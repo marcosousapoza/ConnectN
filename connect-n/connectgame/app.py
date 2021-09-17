@@ -4,13 +4,9 @@ from typing import List
 class App:
 
     @staticmethod
-    def launch() -> None:
-        game_n = 4
-        board_width = 7
-        board_height = 6
+    def launch(game_n=4, board_width=7, board_height=6) -> None:
 
         players = App._get_players(game_n)
-
         game = Game(game_n, board_width, board_height, players)
         game.start_game()
 
