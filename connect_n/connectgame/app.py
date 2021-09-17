@@ -1,4 +1,6 @@
-from . import Game, SimpleHeuristic, HumanPlayer, PlayerController
+from . import Game, PlayerController
+from .heuristics import SimpleHeuristic
+from .controllers import HumanPlayer
 from typing import List
 
 class App:
