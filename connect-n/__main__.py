@@ -1,7 +1,4 @@
-
-
-
-from connectN.src.app import App
+from connectgame.app import App
 
 
 if __name__ == '__main__':
