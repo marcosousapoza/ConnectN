@@ -17,7 +17,7 @@ class App:
     def _get_players(n:int) -> List[PlayerController]:
         """Determine the players for the game
         Returns:
-            [type]: an array of size 2 with two Playercontrollers
+            List[PlayerController]: an array of size 2 with two Playercontrollers
         """
         heuristic1 = SimpleHeuristic(n)
         heuristic2 = SimpleHeuristic(n)
