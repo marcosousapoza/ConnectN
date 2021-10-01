@@ -1,12 +1,11 @@
 from __future__ import annotations
-from typing import List
+from typing import Generator, List, Optional
 from abc import ABC, abstractclassmethod
-from typing import List
-
+import numpy as np
 
 class Board:
 
-    def __init__(self, width:int, height:int) -> None:
+    def __init__(self, width:int, height:int, player_ids:List[int]) -> None:
         """Constructor for creating a new empty board
 
         Args:
@@ -15,7 +14,8 @@ class Board:
         """
         self.width = width
         self.height = height
-        self.board_state = [[0 for i in range(height)] for j in range(width)]
+        self.player_ids = player_ids
+        self.board_state = np.zeros(shape=(width, height), dtype=int)
 
     @classmethod
     def clone_board(cls, other:Board) -> Board:
@@ -24,20 +24,46 @@ class Board:
         Args:
             other (Board): board to be copied
         """
-        r_board = Board(other.width, other.height)
-        r_board.board_state = other.board_state
+        r_board = Board(other.width, other.height, other.player_ids)
+        r_board.board_state = other.board_state.copy()
         return r_board
 
-    @classmethod
-    def clone_board_by_state(cls, state:List[List[int]]) -> Board:
+    @staticmethod
+    def clone_board_by_state(state:List[List[int]], player_ids:List[int]) -> Board:
         """Constructor for cloning a board based on a boardstate
 
         Args:
             state (List[List[int]]): state of board
+            player_ids (List[int]): list player ids
         """
-        r_board = cls(len(state), len(state[0]))
-        r_board.board_state = state
+        r_board = Board(len(state), len(state[0]), player_ids)
+        r_board.board_state = np.array(state, dtype=int)
         return r_board
+
+    def copy(self) -> Board:
+        """copies board
+
+        Returns:
+            Board: copy of board
+        """
+        return Board.clone_board(self)
+
+    def moves_played(self, player_id:int) -> int:
+        """calculates how many moves a player has played
+
+        Args:
+            player_id (int): player id
+
+        Returns:
+            int: amount of moves played
+        """
+        a = self.get_board_state()
+        rvalue = 0
+        for i in range(len(a)):
+            for j in range(len(a[0])):
+                if a[i][j] == player_id:
+                    rvalue += 1
+        return rvalue
 
     def get_value(self, x:int, y:int) -> int:
         """getter for the calue of ceratin coordinate in the board
@@ -49,7 +75,20 @@ class Board:
         Returns:
             int: The value of a certain coordinate in the board
         """
-        return self.board_state[x][y]
+        return self.board_state[x,y]
+
+    def get_opponent(self, player_id:int) -> int:
+        """get the player id of the opponent
+
+        Args:
+            player_id (int): player id
+
+        Returns:
+            int: player id of oponent
+        """
+        if (player_id == self.player_ids[0]):
+            return self.player_ids[1]
+        return self.player_ids[0]
     
     def get_board_state(self) -> List[List[int]]:
         """getter for state of board
@@ -57,7 +96,15 @@ class Board:
         Returns:
             List[List[int]]: state of board
         """
-        return [[ele for ele in sl] for sl in self.board_state]
+        return self.board_state.tolist()
+
+    def get_board_state_array(self) -> np.ndarray:
+        """getter for state of board as ndarray
+
+        Returns:
+            np.ndarray: state of board
+        """
+        return self.board_state.copy()
     
     def play(self, x:int, player_id:int) -> bool:
         """Let player player_id make a move in column x
@@ -69,9 +116,9 @@ class Board:
         Returns:
             bool: true if succeeded
         """
-        for i in range(len(self.board_state[0]) - 1, 0, -1): 
-            if self.board_state[x][i] == 0:
-                self.board_state[x][i] = player_id
+        for i in range(len(self.board_state[0]) - 1, -1, -1):
+            if self.board_state[x,i] == 0:
+                self.board_state[x,i] = player_id
                 return True
         return False
     
@@ -84,7 +131,19 @@ class Board:
         Returns:
             bool: true if spot is not taken yet
         """
-        return self.get_board_state()[x][0] == 0
+        return self.board_state[x,0] == 0
+
+    def get_valid_moves(self) -> List[int]:
+        """gets all playable moves
+
+        Returns:
+            List[int]: list of playable moves
+        """
+        rList = []
+        for col in range(self.width):
+            if self.is_valid(col):
+                rList.append(col)
+        return rList
     
     def get_new_board(self, x:int, player_id:int) -> Board:
         """Gets a new board given a player and their action
@@ -97,12 +156,12 @@ class Board:
             Board: a *new* Board object with the resulting state
         """
 
-        new_board_state = self.get_board_state()
-        for i in range(len(new_board_state[0]) - 1, 0, -1):
-            if new_board_state[x][i] == 0:
-                new_board_state[x][i] = player_id
-                return Board.clone_board_by_state(new_board_state)
-        return Board.clone_board_by_state(new_board_state)
+        new_board_state = self.board_state.copy()
+        for i in range(len(new_board_state[0]) - 1, -1, -1):
+            if new_board_state[x,i] == 0:
+                new_board_state[x,i] = player_id
+                return Board.clone_board_by_state(new_board_state.tolist(), self.player_ids)
+        return Board.clone_board_by_state(new_board_state.tolist(), self.player_ids)
     
     def __str__(self) -> str:
         """Draw a human readable representation of the board
@@ -123,14 +182,137 @@ class Board:
             output += "\n" + divider + "\n"
             for j in range (len(self.board_state)):
                 node = " "
-                if self.board_state[j][i] == 1:
+                if self.board_state[j,i] == 1:
                     node = "X"
-                elif self.board_state[j][i] == 2:
+                elif self.board_state[j,i] == 2:
                     node = "O"
                 output += "| " + node + " "
             output += "|"
         output += "\n" + divider2 + "\n" + number_row + "\n"
         return output
+
+
+class Tree():
+
+    def __init__(self, board:Board, player_id, game_n:int, transition_move:Optional[int]=None, evaluation:Optional[int]=None, depth:int=0) -> None:
+        self.board = board
+        self.player_id = player_id
+        self.evaluation = evaluation
+        self.transition_move = transition_move
+        self.game_n = game_n
+        self.depth = depth
+
+    def get_children(self) -> List[Tree]:
+        """gets all the successors of the tree
+
+        Returns:
+            List[Tree]: list of successors
+        """
+        rList = []
+        for move in self.board.get_valid_moves():
+            n_board = self.board.get_new_board(move, self.player_id)
+            rList.append(Tree(n_board, n_board.get_opponent(self.player_id), self.game_n, move, None, self.depth+1))
+        return rList
+
+    def set_evaluation(self, evaluation:int) -> None:
+        """sets the evaluation of the node (heuristic value)
+
+        Args:
+            evaluation (int): value of evaluation
+        """
+        self.evaluation = evaluation
+
+    def get_player(self) -> int:
+        """gets the player that is next to move
+
+        Returns:
+            int: player_id
+        """
+        return self.player_id
+
+    def approximate(self, heuristic:Heuristic) -> None:
+        """given a heuristic function it will approximate its evaluation
+
+        Args:
+            heuristic (Heuristic): heuristic class
+        """
+        self.evaluation = heuristic.evaluate(self.player_id, self.board)
+
+    def get_transition_move(self) -> int:
+        """returns the last move played. So it is the link to its parent
+
+        Returns:
+            int: last move played
+        """
+        return self.transition_move
+
+    def get_board(self) -> Board:
+        """gets board represented by this tree
+
+        Returns:
+            Board: board
+        """
+        return self.board.copy()
+
+    def evaluate(self) -> int:
+        """gets stored evaluation
+
+        Returns:
+            int: evaluation value
+        """
+        return self.evaluation
+
+    def is_terminal(self) -> bool:
+        """determines if a Tree is terminal
+
+        Returns:
+            bool: true if terminal else false
+        """
+        return Game.winning(self.board.get_board_state(), self.game_n) != 0
+
+    def has_evaluation(self) -> bool:
+        """checks whether ther is a evaluation value stored 
+
+        Returns:
+            bool: true if there is a evaluation value stored
+        """
+        return self.evaluation != None
+
+    def __lt__(self, other:Tree) -> bool:
+        if self.evaluation == None and other.evaluation != None:
+            return other
+        if self.evaluation != None and other.evaluation == None:
+            return self
+        if self.evaluation == None and other.evaluation == None:
+            raise AttributeError("You need to evaluate the Trees first")
+        return (self.evaluation < other.evaluation)
+
+    def __le__(self, other:Tree) -> bool:
+        if self.evaluation == None and other.evaluation != None:
+            return other
+        if self.evaluation != None and other.evaluation == None:
+            return self
+        if self.evaluation == None and other.evaluation == None:
+            raise AttributeError("You need to evaluate the Trees first")
+        return (self.evaluation <= other.evaluation)
+
+    def __gt__(self, other:Tree) -> bool:
+        if self.evaluation == None and other.evaluation != None:
+            return other
+        if self.evaluation != None and other.evaluation == None:
+            return self
+        if self.evaluation == None and other.evaluation == None:
+            raise AttributeError("You need to evaluate the Trees first")
+        return (self.evaluation > other.evaluation)
+
+    def __ge__(self, other:Tree) -> bool:
+        if self.evaluation == None and other.evaluation != None:
+            return other
+        if self.evaluation != None and other.evaluation == None:
+            return self
+        if self.evaluation == None and other.evaluation == None:
+            raise AttributeError("You need to evaluate the Trees first")
+        return (self.evaluation >= other.evaluation)
 
 
 class Heuristic(ABC):
@@ -266,10 +448,10 @@ class Game:
             board_height (int): Height of the board
             players (List[PlayerController]): List of players
         """
-        assert (board_width % 2 != 0, "Board width must be odd!")
+        assert board_width % 2 != 0, "Board width must be odd!"
         self.game_n = game_n
         self.players = players
-        self.game_board = Board(board_width, board_height)
+        self.game_board = Board(board_width, board_height, [plr.player_id for plr in players])
     
     def start_game(self) -> int: 
         """Starts the game
