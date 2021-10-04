@@ -1,5 +1,5 @@
 from connect_n.connectgame import heuristics
-from . import PlayerController, Heuristic, Board, Game, Tree
+from . import PlayerController, Heuristic, Board, Game, Node
 from typing import Optional
 from time import sleep
 
@@ -44,12 +44,27 @@ class MinMax(PlayerController):
     def __init__(self, player_id:int, game_n:int, heuristic:Heuristic, depth:int):
         assert heuristic != None, "The computer player needs a heuristic to" 
         "calculate the move but has not received any"
+
+        # initialize attributes
         self.depth = depth
+
+        # counter attributes
+        self.counter = 0
+
+        # for silencing output
+        self.show = True
+
         super().__init__(player_id, game_n, heuristic)
 
-    def __min_max(self, node:Tree, depth:int) -> float:
+    def display(self, b:bool) -> None:
+        self.show = b
+
+    def get_counter(self) -> int:
+        return self.counter
+
+    def __min_max(self, node:Node, depth:int) -> float:
+        self.counter += 1
         if depth == 0 or node.is_terminal():
-            node.approximate(self.heuristic)
             return node.evaluate()
         if node.get_player() == self.player_id:
             value = -float('inf')
@@ -63,27 +78,36 @@ class MinMax(PlayerController):
             return value
 
     def make_move(self, board:Board) -> int:
-        print(board)
+        if self.show:
+            print(board)
 
-        # create Tree structure
-        tree = Tree(board, self.player_id, self.game_n)
+        # create Node structure
+        tree = Node(board, self.player_id, self.game_n, self.heuristic)
         children = tree.get_children()
+
+        # reset counter
+        self.counter = 0
 
         # if there is only one move the descision is made fast
         if len(children) == 1:
-            return children[0].get_transition_move()
+            return children[0].get_last_move()
 
         best = children[0]
+        best_eval = -float('inf')
         for child in children:
-            child.set_evaluation(    
-                self.__min_max(
-                    child, 
-                    self.depth, 
-                )
-            )
-            if child >= best:
+            new_eval = self.__min_max(
+                                child, 
+                                self.depth-1, 
+                            )
+            if best_eval < new_eval:
                 best = child
-        return best.get_transition_move()
+                best_eval = new_eval
+
+        if self.show:
+            print("Player " + str(self) + " visited " + str(self.counter) + " nodes using the MinMax algorithm")
+            print("Player " + str(self) + " selected move " + str(best.get_last_move()))
+        
+        return best.get_last_move()
 
 
 class AlphaBeta(PlayerController):
@@ -91,19 +115,38 @@ class AlphaBeta(PlayerController):
     def __init__(self, player_id:int, game_n:int, heuristic:Heuristic, depth:int):
         assert heuristic != None, "The computer player needs a heuristic to" 
         "calculate the move but has not received any"
+        
+        # initialize attributes
         self.depth = depth
+
+        # counter attributes
+        self.counter = 0
+        self.prune_count = 0
+
+        # silence output to terminal
+        self.show = True
+
         super().__init__(player_id, game_n, heuristic)
 
-    def __alphabeta(self, node:Tree, depth:int, alpha:int, beta:int):
+    def display(self, b:bool) -> None:
+        self.show = b
+
+    def get_counter(self) -> int:
+        return self.counter
+
+    def get_prune_counter(self) -> int:
+        return self.prune_count
+
+    def __alphabeta(self, node:Node, depth:int, alpha:int, beta:int):
+        self.counter += 1
         if depth == 0 or node.is_terminal():
-            node.approximate(self.heuristic)
-            evaluation = node.evaluate()
-            return evaluation
+            return node.evaluate()
         if node.get_player() == self.player_id:
             value = -float('inf')
             for child in node.get_children():
                 value = max(value, self.__alphabeta(child, depth-1, alpha, beta))
                 if value >= beta:
+                    self.prune_count += 1
                     break
                 alpha = max(alpha, value)
             return value
@@ -112,31 +155,44 @@ class AlphaBeta(PlayerController):
             for child in node.get_children():
                 value = min(value, self.__alphabeta(child, depth-1, alpha, beta))
                 if value <= alpha:
+                    self.prune_count += 1
                     break
                 beta = min(beta, value)
             return value
 
     def make_move(self, board: Board) -> int:
-        print(board)
+        if self.show:
+           print(board)
 
-        # create Tree structure
-        tree = Tree(board, self.player_id, self.game_n)
+        # create Node structure
+        tree = Node(board, self.player_id, self.game_n, self.heuristic)
         children = tree.get_children()
+
+        # set counter to 0
+        self.counter = 0
+        self.prune_count = 0
 
         # if there is only one move the descision is made fast
         if len(children) == 1:
-            return children[0].get_transition_move()
+            return children[0].get_last_move()
 
         best = children[0]
+        best_eval = -float('inf')
         for child in children:
-            child.set_evaluation(    
-                self.__alphabeta(
-                    child, 
-                    self.depth,
-                    -float('inf'),
-                    float('inf')
-                )
+            new_eval = self.__alphabeta(
+                child, 
+                self.depth-1,
+                -float('inf'),
+                float('inf')
             )
-            if child >= best:
+            
+            if best_eval < new_eval:
                 best = child
-        return best.get_transition_move()
+                best_eval = new_eval
+
+        if self.show:
+            print("Player " + str(self) + " visited " + str(self.counter) + " nodes using Alpha Beta pruning")
+            print("It pruned " + str(self.prune_count) + " branches.")
+            print("Player " + str(self) + " selected move " + str(best.get_last_move()))
+
+        return best.get_last_move()

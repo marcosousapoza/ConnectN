@@ -3,7 +3,7 @@ from typing import Generator, List, Optional
 from abc import ABC, abstractclassmethod
 import numpy as np
 
-class Board:
+class Board():
 
     def __init__(self, width:int, height:int, player_ids:List[int]) -> None:
         """Constructor for creating a new empty board
@@ -192,35 +192,26 @@ class Board:
         return output
 
 
-class Tree():
+class Node():
 
-    def __init__(self, board:Board, player_id, game_n:int, transition_move:Optional[int]=None, evaluation:Optional[int]=None, depth:int=0) -> None:
+    def __init__(self, board:Board, player_id, game_n:int, heuristic:Heuristic, last_move:Optional[int]=None) -> None:
         self.board = board
         self.player_id = player_id
-        self.evaluation = evaluation
-        self.transition_move = transition_move
+        self.heuristic = heuristic
+        self.last_move = last_move
         self.game_n = game_n
-        self.depth = depth
 
-    def get_children(self) -> List[Tree]:
+    def get_children(self) -> List[Node]:
         """gets all the successors of the tree
 
         Returns:
-            List[Tree]: list of successors
+            List[Node]: list of successors
         """
         rList = []
         for move in self.board.get_valid_moves():
             n_board = self.board.get_new_board(move, self.player_id)
-            rList.append(Tree(n_board, n_board.get_opponent(self.player_id), self.game_n, move, None, self.depth+1))
+            rList.append(Node(n_board, n_board.get_opponent(self.player_id), self.game_n, self.heuristic, move))
         return rList
-
-    def set_evaluation(self, evaluation:int) -> None:
-        """sets the evaluation of the node (heuristic value)
-
-        Args:
-            evaluation (int): value of evaluation
-        """
-        self.evaluation = evaluation
 
     def get_player(self) -> int:
         """gets the player that is next to move
@@ -230,29 +221,17 @@ class Tree():
         """
         return self.player_id
 
-    def approximate(self, heuristic:Heuristic) -> None:
-        """given a heuristic function it will approximate its evaluation
-
-        Args:
-            heuristic (Heuristic): heuristic class
-        """
-        self.evaluation = heuristic.evaluate(self.player_id, self.board)
-
-    def get_transition_move(self) -> int:
+    def get_last_move(self) -> int:
         """returns the last move played. So it is the link to its parent
 
         Returns:
             int: last move played
         """
-        return self.transition_move
 
-    def get_board(self) -> Board:
-        """gets board represented by this tree
+        if self.last_move ==None:
+            raise TypeError("This Node has no parent")
 
-        Returns:
-            Board: board
-        """
-        return self.board.copy()
+        return self.last_move
 
     def evaluate(self) -> int:
         """gets stored evaluation
@@ -260,59 +239,15 @@ class Tree():
         Returns:
             int: evaluation value
         """
-        return self.evaluation
+        return self.heuristic.evaluate(self.player_id, self.board)
 
     def is_terminal(self) -> bool:
-        """determines if a Tree is terminal
+        """determines if a Node is terminal
 
         Returns:
             bool: true if terminal else false
         """
         return Game.winning(self.board.get_board_state(), self.game_n) != 0
-
-    def has_evaluation(self) -> bool:
-        """checks whether ther is a evaluation value stored 
-
-        Returns:
-            bool: true if there is a evaluation value stored
-        """
-        return self.evaluation != None
-
-    def __lt__(self, other:Tree) -> bool:
-        if self.evaluation == None and other.evaluation != None:
-            return other
-        if self.evaluation != None and other.evaluation == None:
-            return self
-        if self.evaluation == None and other.evaluation == None:
-            raise AttributeError("You need to evaluate the Trees first")
-        return (self.evaluation < other.evaluation)
-
-    def __le__(self, other:Tree) -> bool:
-        if self.evaluation == None and other.evaluation != None:
-            return other
-        if self.evaluation != None and other.evaluation == None:
-            return self
-        if self.evaluation == None and other.evaluation == None:
-            raise AttributeError("You need to evaluate the Trees first")
-        return (self.evaluation <= other.evaluation)
-
-    def __gt__(self, other:Tree) -> bool:
-        if self.evaluation == None and other.evaluation != None:
-            return other
-        if self.evaluation != None and other.evaluation == None:
-            return self
-        if self.evaluation == None and other.evaluation == None:
-            raise AttributeError("You need to evaluate the Trees first")
-        return (self.evaluation > other.evaluation)
-
-    def __ge__(self, other:Tree) -> bool:
-        if self.evaluation == None and other.evaluation != None:
-            return other
-        if self.evaluation != None and other.evaluation == None:
-            return self
-        if self.evaluation == None and other.evaluation == None:
-            raise AttributeError("You need to evaluate the Trees first")
-        return (self.evaluation >= other.evaluation)
 
 
 class Heuristic(ABC):
@@ -432,7 +367,7 @@ class PlayerController(ABC):
         pass
 
 
-class Game:
+class Game():
     game_n:int
     players:List[PlayerController]
     game_board:Board

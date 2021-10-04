@@ -2,6 +2,7 @@ import numpy as np
 from numpy.lib.type_check import _real_if_close_dispatcher
 from . import Heuristic, Board, Game
 from typing import List, Optional, Tuple
+from random import randint
 
 class BadHeuristic(Heuristic):
 
@@ -14,7 +15,13 @@ class BadHeuristic(Heuristic):
     def evaluate(self, player:int, board:Board) -> int:
         """Determine utility of a board state
         """
-        return 0
+        board_state = board.get_board_state()
+        win = Game.winning(board_state, self.game_n)
+        if(win == player):
+            return float('inf')
+        elif(win != 0):
+            return -float('inf')
+        return randint(-10, 10)
 
 
 class SimpleHeuristic(Heuristic):
@@ -228,3 +235,4 @@ class BetterHeuristic2(Heuristic):
                     heur_value -= connectability(board_state, j, i, player)/moves_oppnet
 
         return heur_value
+

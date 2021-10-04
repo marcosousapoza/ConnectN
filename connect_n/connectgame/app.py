@@ -1,5 +1,5 @@
 from . import Game, PlayerController
-from .heuristics import BetterHeuristic, BetterHeuristic2, SimpleHeuristic
+from .heuristics import BadHeuristic, BetterHeuristic, BetterHeuristic2, SimpleHeuristic
 from .controllers import AlphaBeta, HumanPlayer, MinMax
 from typing import List
 
@@ -23,13 +23,14 @@ class App:
         Returns:
             List[PlayerController]: an array of size 2 with two Playercontrollers
         """
-        heuristic1 = BetterHeuristic(n)
-        heuristic2 = BetterHeuristic(n)
 
-        human = AlphaBeta(1, n, heuristic1, 5)
-        compu = AlphaBeta(2, n, heuristic2, 5)
+        # use fast heuristic
+        heuristic1 = BetterHeuristic2(n)
+        heuristic2 = BetterHeuristic2(n)
 
+        compu1 = AlphaBeta(1, n, heuristic1, 6)
+        compu2 = AlphaBeta(2, n, heuristic2, 6)
 
-        players =  [human, compu] 
+        players =  [compu1, compu2] 
 
         return players
