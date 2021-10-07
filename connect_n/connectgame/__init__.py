@@ -1,5 +1,5 @@
 from __future__ import annotations
-from typing import Generator, List, Optional
+from typing import Generator, List, Optional, Tuple
 from abc import ABC, abstractclassmethod
 import numpy as np
 
@@ -66,7 +66,7 @@ class Board():
         return rvalue
 
     def get_value(self, x:int, y:int) -> int:
-        """getter for the calue of ceratin coordinate in the board
+        """getter for the value of ceratain coordinate in the board
 
         Args:
             x (int): x
@@ -415,6 +415,37 @@ class Game():
             print("Player " + str(self.players[self.winner - 1]) + " won!")
         
         return self.winner
+
+    def play_by_move(self) -> Generator[Tuple[Board, List[PlayerController], int, bool], None, str]:
+        """same as start_game but it yields infrmation about the positon
+        after every move.
+
+        Returns:
+            str: indicator that the game has ended
+
+        Yields:
+            Tuple[Board, List[PlayerController], int, bool]: Board:= current possition
+                                                             List[PlayerController] list of player objects
+                                                             int := index of current player
+                                                             bool := True if game is over
+        """
+        current_player = 0
+        yield (self.game_board, self.players, current_player, self.is_over())
+
+        while not self.is_over():
+            # turn player can make a move
+            self.game_board.play(
+                self.players[current_player].make_move(self.game_board), 
+                self.players[current_player].player_id)
+            # other player can make a move now
+            if current_player == 0:
+                current_player = 1
+            else:
+                current_player = 0
+
+            yield (self.game_board, self.players, current_player, self.is_over())
+
+        return "Game is over"
     
     def is_over(self) -> bool:
         """Determine whether the game is over
