@@ -261,3 +261,39 @@ class Statistics():
         f.text(0.5, 0.02, 'Depth', ha='center', fontsize=10)
         f.text(0.06, 0.5, 'Nr. Nodes Visited', va='center', fontsize=10, rotation='vertical')
         plt.show()
+
+    @staticmethod
+    def vizualize_node_count_over_time(game_n:int, depth:int, width:int, height:int) -> None:
+
+        mm = App._get_min_max(game_n, depth)[0]
+        ab = App._get_alpha_beta(game_n, depth)[1]
+
+        ab_nodes = []
+        ab_x = []
+        mm_nodes = []
+        mm_x = []
+
+        players = [mm, ab]
+        game = Game(game_n, width, height, players)
+        game_iter = game.play_by_move()
+        next(game_iter) # returns initialized board
+        move_nr = 0
+        for board, _, current_player, _ in game_iter:
+            move_nr += 1
+            print(board)
+            if current_player == 0:
+                mm_nodes.append(players[(current_player+1) % 2].get_counter())
+                mm_x.append(move_nr)
+            else:
+                ab_nodes.append(players[(current_player+1) % 2].get_counter())
+                ab_x.append(move_nr)
+
+        fig, ax = plt.subplots()
+        fig.suptitle('Nodes visited over time')
+        ax.plot(ab_x, ab_nodes, label='Min-Max')
+        ax.plot(mm_x, mm_nodes, label='Alpha-beta')
+        ax.set_xlabel('Move')
+        ax.set_ylabel('Nr. of Nodes Visited')
+        fig.legend()
+        plt.show()
+

@@ -438,10 +438,7 @@ class Game():
                 self.players[current_player].make_move(self.game_board), 
                 self.players[current_player].player_id)
             # other player can make a move now
-            if current_player == 0:
-                current_player = 1
-            else:
-                current_player = 0
+            current_player = (current_player+1)%2
 
             yield (self.game_board, self.players, current_player, self.is_over())
 
