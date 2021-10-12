@@ -20,6 +20,15 @@ class App:
 
     @staticmethod
     def _get_min_max(n:int, depth:int) -> List[MinMax]:
+        """get 2 minmax agents
+
+        Args:
+            n (int): gamen
+            depth (int): depth
+
+        Returns:
+            List[MinMax]: list of minmax agents
+        """
         # use fast heuristic
         heuristic1 = BetterHeuristic2(n)
         heuristic2 = BetterHeuristic2(n)
@@ -35,6 +44,15 @@ class App:
 
     @staticmethod
     def _get_alpha_beta(n:int, depth:int) -> List[AlphaBeta]:
+        """gets two alpha-beta agents
+
+        Args:
+            n (int): gamen
+            depth (int): depth
+
+        Returns:
+            List[AlphaBeta]: list of alpha-beta agnts
+        """
         # use fast heuristic
         heuristic1 = BetterHeuristic2(n)
         heuristic2 = BetterHeuristic2(n)
@@ -59,8 +77,8 @@ class App:
         heuristic1 = BetterHeuristic2(n)
         heuristic2 = BetterHeuristic2(n)
 
-        compu1 = AlphaBeta(1, n, heuristic1, 6)
-        compu2 = AlphaBeta(2, n, heuristic2, 6)
+        compu1 = AlphaBeta(1, n, heuristic1, 8)
+        compu2 = HumanPlayer(2, n, heuristic2)
 
         players =  [compu1, compu2] 
 
@@ -173,13 +191,29 @@ class Statistics():
         return r_lst
 
     @staticmethod
-    def visualize_alpha_beta(size=Tuple[int, int, int], depth_range=List[int]) -> None:
+    def visualize_alpha_beta(size:Tuple[int, int, int], depth_range:List[int]) -> None:
+        """plots how many nodes alpha beta visits over diffrent depths
+
+        Args:
+            sizes (List[Tuple[int, int, int]]): first int := game_n
+                                                second int := width of board
+                                                third int := height of board
+            depth_range (List[int]): List of depths to be plotted
+        """
         d = Statistics.simulate_alpha_beta([size], depth_range)
         plt.plot(d['depth'], d['nodes'])
         plt.show()
 
     @staticmethod
     def visualize_compare(size:Tuple[int, int, int], depth_range:List[int]) -> None:
+        """visualizes alpha-beta and min-max side by side for different depths
+
+        Args:
+            sizes (List[Tuple[int, int, int]]): first int := game_n
+                                                second int := width of board
+                                                third int := height of board
+            depth_range (List[int]): range of depths to be plotted
+        """
         d1 = Statistics.simulate_alpha_beta([size], depth_range)
         d2 = Statistics.simulate_min_max([size], depth_range)
         plt.plot(d1['depth'], d1['nodes'])
@@ -190,6 +224,14 @@ class Statistics():
 
     @staticmethod
     def vizualize_compare_multiple_width(width_range:List[int], depth_range:List[int], game_n:int, height:int) -> None:
+        """vizualizes the complexity of alpha-beta and min-max agents over different widths and depths
+
+        Args:
+            width_range (List[int]): range of widths to be plotted
+            depth_range (List[int]): range of depths to be plotted
+            game_n (int): gamen
+            height (int): height (best plots if height is large)
+        """
         
         f, (ax1, ax2) = plt.subplots(1, 2, sharex=True, sharey=True)
         f.suptitle("Comparison for Different Widths", fontsize=13)
@@ -200,8 +242,6 @@ class Statistics():
         # labeling ax1
         ax1.set_title("Alpha Beta", fontsize=10)
         ax1.set_yscale('log')
-        #ax1.set_ylabel('Nr. Visited Nodes')
-        #ax1.set_xlabel('Depth')
         ax1.set_xticks(depth_range)
 
         for width in width_range:
@@ -209,9 +249,6 @@ class Statistics():
             ax2.plot(d['depth'], d['nodes'])
         # labeling ax2
         ax2.set_title("Min-Max", fontsize=10)
-        ax1.set_yscale('log')
-        #ax1.set_ylabel('Nr. Visited Nodes')
-        #ax1.set_xlabel('Depth')
         ax1.set_xticks(depth_range)
 
         # legend
@@ -229,6 +266,14 @@ class Statistics():
 
     @staticmethod
     def vizualize_compare_multiple_gamen(game_n_range:int, depth_range:List[int], width:int, height:int) -> None:
+        """vizualizes the complexity of alpha-beta and min-max agents over different widths and depths
+
+        Args:
+            game_n_range (int): range of gamen to be plotted
+            depth_range (List[int]): range of depths to be plotted
+            width (int): width of board
+            height (int): height of board
+        """
         
         f, (ax1, ax2) = plt.subplots(1, 2, sharex=True, sharey=True)
         f.suptitle("Comparison for Different Game N", fontsize=13)
@@ -264,6 +309,15 @@ class Statistics():
 
     @staticmethod
     def vizualize_node_count_over_time(game_n:int, depth:int, width:int, height:int) -> None:
+        """simulates one game of min-max against alpha-beta and displays a plot of how many
+           nodes where visited.
+
+        Args:
+            game_n (int): gamen
+            depth (int): depth
+            width (int): width
+            height (int): height
+        """
 
         mm = App._get_min_max(game_n, depth)[0]
         ab = App._get_alpha_beta(game_n, depth)[1]
@@ -296,4 +350,3 @@ class Statistics():
         ax.set_ylabel('Nr. of Nodes Visited')
         fig.legend()
         plt.show()
-

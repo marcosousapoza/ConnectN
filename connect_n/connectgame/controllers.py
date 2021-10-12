@@ -57,12 +57,31 @@ class MinMax(PlayerController):
         super().__init__(player_id, game_n, heuristic)
 
     def display(self, b:bool) -> None:
+        """if set to false the player will not display the board after move
+
+        Args:
+            b (bool): if true the board will be displayed. If false not.
+        """
         self.show = b
 
     def get_counter(self) -> int:
+        """gets count of nodes visited
+
+        Returns:
+            int: nodes visited
+        """
         return self.counter
 
     def __min_max(self, node:Node, depth:int) -> float:
+        """runs min-max on starting node
+
+        Args:
+            node (Node): starting node
+            depth (int): depth
+
+        Returns:
+            float: evaluation
+        """
         self.counter += 1
         if depth == 0 or node.is_terminal():
             return node.evaluate()
@@ -78,6 +97,14 @@ class MinMax(PlayerController):
             return value
 
     def make_move(self, board:Board) -> int:
+        """makes a move on board
+
+        Args:
+            board (Board): current position
+
+        Returns:
+            int: best move
+        """
         if self.show:
             print(board)
 
@@ -129,15 +156,41 @@ class AlphaBeta(PlayerController):
         super().__init__(player_id, game_n, heuristic)
 
     def display(self, b:bool) -> None:
+        """if set to false the player will not display the board after move
+
+        Args:
+            b (bool): if true the board will be displayed. If false not.
+        """
         self.show = b
 
     def get_counter(self) -> int:
+        """gets count of nodes visited
+
+        Returns:
+            int: nodes visited
+        """
         return self.counter
 
     def get_prune_counter(self) -> int:
+        """gets count of pruned branches
+
+        Returns:
+            int: pruned branches
+        """
         return self.prune_count
 
-    def __alphabeta(self, node:Node, depth:int, alpha:int, beta:int):
+    def __alphabeta(self, node:Node, depth:int, alpha:int, beta:int) -> int:
+        """runs alpha-beta on starting node
+
+        Args:
+            node (Node): starting node
+            depth (int): depth
+            alpha (int): alpha value
+            beta (int): beta value
+
+        Returns:
+            int: evaluation
+        """
         self.counter += 1
         if depth == 0 or node.is_terminal():
             return node.evaluate()
@@ -161,6 +214,14 @@ class AlphaBeta(PlayerController):
             return value
 
     def make_move(self, board: Board) -> int:
+        """makes a move on board
+
+        Args:
+            board (Board): current position
+
+        Returns:
+            int: best move
+        """
         if self.show:
            print(board)
 

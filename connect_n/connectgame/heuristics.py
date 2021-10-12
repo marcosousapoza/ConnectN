@@ -85,7 +85,8 @@ class BetterHeuristic(Heuristic):
         return "Better"
 
     def evaluate(self, player: int, board: Board) -> int:
-
+        """Determine utility of a board state
+        """
         def get_diagnoal_lr(state:np.ndarray) -> List[List[int]]:
             rArray = []
             for i in range(1-len(state), len(state[0])):
@@ -194,7 +195,8 @@ class BetterHeuristic2(Heuristic):
         return "Better 2"
 
     def evaluate(self, player: int, board: Board) -> int:
-        
+        """Determine utility of a board state
+        """
         def connectability(state:List[List[int]], col:int, row:int, pl_id:int) -> int:
             val = 0
             if row - 1 > 0 and (state[row-1][col] == pl_id or state[row-1][col] == 0):
